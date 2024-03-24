@@ -3,12 +3,14 @@ import { z } from "https://deno.land/x/zod/mod.ts";
 import { ZodError } from "https://deno.land/x/zod@v3.22.4/ZodError.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import MistralClient from "npm:@mistralai/mistralai";
-import { notes } from "../_shared/schema.ts";
+import { notes, tags } from "../_shared/schema.ts";
 import { drizzle } from "npm:drizzle-orm/postgres-js";
-import { InferSelectModel } from "npm:drizzle-orm";
+import { eq, InferSelectModel, isNull } from "npm:drizzle-orm";
 import postgres from "npm:postgres";
 import { uuid } from "https://esm.sh/v135/@supabase/gotrue-js@2.62.2/dist/module/lib/helpers.js";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getCategoryLabel } from "../_shared/llm.ts";
+import { ConsoleLogWriter } from "npm:drizzle-orm/logger";
 
 const databaseUrl = Deno.env.get("C_SUPABASE_DB_URL")!;
 const pool = postgres(databaseUrl, { prepare: false });
@@ -44,20 +46,12 @@ Deno.serve(async (req) => {
       model: "mistral-embed",
       input: `${title}\n${content}`,
     });
-    // const chatResponse = await client.chat({
-    //   model: "mistral-small",
-    //   messages: [
-    //     {
-    //       role: "system",
-    //       content:
-    //         "Your task is to return a one sentence summary of the note the user provides.",
-    //     },
-    //     {
-    //       role: "user",
-    //       content: note,
-    //     },
-    //   ],
-    // });
+
+    const savedCategories = (await db.select().from(tags).where(
+      user?.id ? eq(tags.profileId, user.id) : isNull(tags.profileId),
+    )).map((tag) => tag.name);
+
+    console.log("Saved categories: ", savedCategories);
 
     const newNote = {
       id: uuid(),
@@ -70,6 +64,19 @@ Deno.serve(async (req) => {
       updatedAt: null,
       deletedAt: null,
     } satisfies Note;
+
+    const category = await getCategoryLabel(
+      newNote.content,
+      savedCategories,
+    );
+
+    if (!savedCategories.includes(category)) {
+      savedCategories.push(category);
+
+      console.log("New category added: ", category);
+    } else {
+      console.log("Added to category: ", category);
+    }
 
     await db.insert(notes).values(newNote);
 

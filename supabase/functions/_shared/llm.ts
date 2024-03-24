@@ -1,5 +1,5 @@
 import MistralClient from "npm:@mistralai/mistralai";
-import type { ResponseFormats } from "npm:@mistralai/mistralai";
+import calendarJSON from "./calendar.json" with { type: "json" };
 
 const client = new MistralClient("TWfVrlX659GSTS9hcsgUcPZ8uNzfoQsg");
 
@@ -71,14 +71,19 @@ export async function getCategoryLabel(
   text: string,
   existingLabels: string[],
 ): Promise<string> {
+  const prompt = `Given the following categories: ${
+    existingLabels.join(", ")
+  }, what category does the following text belong to? You can invent new categories but they should be specific to the topic but generic to the text. Use the reply key 'category'`;
+
+  // console.log("Prompt: ", prompt);
+
   const response = await client.chat({
     messages: [
       {
         role: "system",
         content:
-          "Please return just the `category` key of the following categories: " +
-          existingLabels.join(", ") +
-          ". If the text does not match any of the categories, return a new, hyper-specific 2-3 word category name",
+          // make the llm return the category biased toward exsiting categories but able to create new ones
+          prompt,
       },
       { role: "user", content: text },
     ],
@@ -86,7 +91,13 @@ export async function getCategoryLabel(
     responseFormat: { "type": "json_object" },
   });
 
-  const category = JSON.parse(response.choices[0].message.content).category;
+  const reply = response.choices[0].message.content;
+
+  // console.log("Reply: ", reply);
+
+  const category = JSON.parse(reply).category;
+
+  // console.log("Category: ", category);
 
   return category.split().map((word: string) =>
     word[0].toUpperCase() + word.slice(1)
@@ -94,16 +105,50 @@ export async function getCategoryLabel(
 }
 
 if (import.meta.main) {
-  const savedCategories = ["school", "work", "personal"];
+  const savedCategories = [];
+  const notes = [];
 
-  const category = await getCategoryLabel(
-    "Brahman: This is the ultimate reality or absolute truth. It's impersonal, transcendent, and immanent. It's the cause and essence of the universe, being itself uncaused.",
-    savedCategories,
-  );
+  console.log("Events: ", calendarJSON);
 
-  if (!savedCategories.includes(category)) {
-    savedCategories.push(category);
+  const events = calendarJSON.events;
+
+  for (const event of events) {
+    // get stdin
+    const newNote = event[2];
+
+    if (!newNote) {
+      break;
+    }
+
+    const category = await getCategoryLabel(
+      newNote,
+      savedCategories,
+    );
+
+    if (!savedCategories.includes(category)) {
+      savedCategories.push(category);
+
+      console.log("New category added: ", category);
+    } else {
+      console.log("Added to category: ", category);
+    }
+
+    notes.push({
+      note: newNote,
+      category,
+      date: new Date(),
+    });
+
+    // Pretty print notes by category
+    console.log("==========\nNotes:\n==========");
+
+    savedCategories.forEach((category) => {
+      console.log(`Category: ${category}`);
+      notes
+        .filter((note) => note.category === category)
+        .forEach((note) => {
+          console.log(`- ${note.note}`);
+        });
+    });
   }
-
-  console.log(category);
 }
