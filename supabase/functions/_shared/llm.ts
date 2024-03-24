@@ -93,11 +93,11 @@ export async function getCategoryLabel(
 
   const reply = response.choices[0].message.content;
 
-  // console.log("Reply: ", reply);
+  console.log("Reply: ", reply);
 
   const category = JSON.parse(reply).category;
 
-  // console.log("Category: ", category);
+  console.log("Category: ", category);
 
   return category.split().map((word: string) =>
     word[0].toUpperCase() + word.slice(1)
