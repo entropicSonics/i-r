@@ -11,11 +11,14 @@ import { uuid } from "https://esm.sh/v135/@supabase/gotrue-js@2.62.2/dist/module
 import { corsHeaders } from "../_shared/cors.ts";
 import { answerQuestion, getTextEmbedding } from "../_shared/llm.ts";
 import { l2Distance } from "npm:pgvector/drizzle-orm";
+import { tags } from "../_shared/schema.ts";
 
 const databaseUrl = Deno.env.get("C_SUPABASE_DB_URL")!;
 const pool = postgres(databaseUrl, { prepare: false });
 
 type Note = InferSelectModel<typeof notes>;
+
+const db = drizzle(pool);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

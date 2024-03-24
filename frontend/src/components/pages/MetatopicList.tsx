@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 // import metatopic from the ui folder
 import Metatopic from "@/components/ui/Metatopic.tsx";
 // import notecollapsed from the ui folder
@@ -6,18 +6,25 @@ import NoteCollapsed from "@/components/ui/NoteCollapsed.tsx";
 
 interface Props {}
 
-const MetatopicList: React.FC<Props> = ({}) => {
-    // Implement your component logic here
+const MetatopicList: React.FC<Props> = ({ metatopics }) => {
+  // Implement your component logic here
 
-    return (
-        <div className="max-w-md">
-        {/* <Drawer.Title className="font-medium mb-4">Database</Drawer.Title> */}
-        {/* Drawer Contents */}
+  return (
+    <div className="max-w-md">
+      {/* <Drawer.Title className="font-medium mb-4">Database</Drawer.Title> */}
+      {/* Drawer Contents */}
 
+      <div className="metatopic-list">
+        <NoteCollapsed
+          title="Database"
+          activity="Last Activity on Dec 2, 2023 at 11:34pm"
+        />
 
-        <div className="metatopic-list">
-          <NoteCollapsed title="Database" activity="Last Activity on Dec 2, 2023 at 11:34pm" />
+        {metatopics.map((metatopic) => (
+          <Metatopic title={metatopic.name} activity={metatopic.createdAt} />
+        ))}
 
+        {/* 
           <Metatopic
             title="Private Equity Research"
             activity="Last Activity on Dec 2, 2023 at 11:34pm"
@@ -33,10 +40,10 @@ const MetatopicList: React.FC<Props> = ({}) => {
           <Metatopic
             title="Vedic Philosophy"
             activity="Last Activity at 2:04pm"
-          />
-        </div>
+          /> */}
       </div>
-    );
+    </div>
+  );
 };
 
 export default MetatopicList;

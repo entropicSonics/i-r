@@ -98,6 +98,15 @@ function App() {
     },
   });
 
+  const metatopics = useQuery({
+    queryKey: ["metatopics"],
+    queryFn: async () => {
+      const res = await supabase.functions.invoke("getCategories", {});
+
+      return res.data.savedCategories;
+    },
+  });
+
   function triggerQuery() {
     if (!question) return;
     ragQuery.mutate(question);
@@ -140,7 +149,17 @@ function App() {
                       triggerQuery={triggerQuery}
                     />
                     <Routes>
-                      <Route path="/" element={<MetatopicList />} />
+                      <Route
+                        path="/"
+                        element={
+                          <div>
+                            {metatopics.isPending && <div>Loading...</div>}
+                            {metatopics.isSuccess && (
+                              <MetatopicList metatopics={metatopics.data} />
+                            )}
+                          </div>
+                        }
+                      />
                       <Route
                         path="/search/:query"
                         element={
