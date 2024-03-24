@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     ).limit(3);
     const questionAnswer = await answerQuestion(
       question,
-      top3Notes.map((note) => note.content),
+      top3Notes.map((note) => `${note.title}\n${note.content}`),
     );
 
     return new Response(
