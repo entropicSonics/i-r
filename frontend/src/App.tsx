@@ -94,11 +94,10 @@ function App() {
           >
             Categorize
           </Button>
+
           <Drawer.Root>
-            <Drawer.Trigger>
-              <Button className="rounded-full border-2 bg-gray-100 text-slate-900 hover:text-slate-200">
-                View Notes
-              </Button>
+            <Drawer.Trigger className ="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:ring-offset-slate-950 dark:focus-visible:ring-slate-300 hover:bg-slate-900/90 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-50/90 h-10 px-4 py-2 rounded-full border-2 bg-gray-100 text-slate-900 hover:text-slate-200">
+              View Notes
             </Drawer.Trigger>
             <Drawer.Portal>
               <Drawer.Overlay className="fixed inset-0 bg-black/40" />

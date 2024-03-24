@@ -10,7 +10,7 @@ const Metatopic: React.FC<Props> = ({ title, activity }) => {
     // Implement your component logic here
 
     return (
-        <div className="metatopic py-4 border-b-2 border-slate-100" >
+        <div className="metatopic py-4 border-b-2 border-slate-100 px-2" >
             {/* Render your component UI here */}
             <div className="flex items-center justify-start pt-2">
                 <h1 className="text-base font-medium mb-2">{title}</h1>
