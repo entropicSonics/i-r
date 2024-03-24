@@ -1,6 +1,8 @@
 import React from 'react';
 // import metatopic from the ui folder
 import Metatopic from "@/components/ui/Metatopic.tsx";
+// import notecollapsed from the ui folder
+import NoteCollapsed from "@/components/ui/NoteCollapsed.tsx";
 
 interface Props {}
 
@@ -8,12 +10,14 @@ const MetatopicList: React.FC<Props> = ({}) => {
     // Implement your component logic here
 
     return (
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md">
         {/* <Drawer.Title className="font-medium mb-4">Database</Drawer.Title> */}
         {/* Drawer Contents */}
 
 
         <div className="metatopic-list">
+          <NoteCollapsed title="Database" activity="Last Activity on Dec 2, 2023 at 11:34pm" />
+
           <Metatopic
             title="Private Equity Research"
             activity="Last Activity on Dec 2, 2023 at 11:34pm"
