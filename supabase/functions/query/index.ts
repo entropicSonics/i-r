@@ -5,10 +5,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import MistralClient from "npm:@mistralai/mistralai";
 import { notes } from "../_shared/schema.ts";
 import { drizzle } from "npm:drizzle-orm/postgres-js";
-import { InferSelectModel } from "npm:drizzle-orm";
+import { eq, InferSelectModel, isNull } from "npm:drizzle-orm";
 import postgres from "npm:postgres";
 import { uuid } from "https://esm.sh/v135/@supabase/gotrue-js@2.62.2/dist/module/lib/helpers.js";
 import { corsHeaders } from "../_shared/cors.ts";
+import { answerQuestion, getTextEmbedding } from "../_shared/llm.ts";
+import { l2Distance } from "npm:pgvector/drizzle-orm";
 
 const databaseUrl = Deno.env.get("C_SUPABASE_DB_URL")!;
 const pool = postgres(databaseUrl, { prepare: false });
@@ -17,8 +19,7 @@ const db = drizzle(pool);
 type Note = InferSelectModel<typeof notes>;
 
 const body = z.object({
-  title: z.string(),
-  content: z.string(),
+  question: z.string(),
 });
 
 Deno.serve(async (req) => {
@@ -34,47 +35,24 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const { title, content } = body.parse(await req.json());
+    const { question } = body.parse(await req.json());
 
     const { data } = await supabaseClient.auth.getUser();
     const user = data.user;
 
-    const client = new MistralClient(Deno.env.get("MISTRAL_API_KEY") ?? "");
-    const embedding = await client.embeddings({
-      model: "mistral-embed",
-      input: `${title}\n${content}`,
-    });
-    // const chatResponse = await client.chat({
-    //   model: "mistral-small",
-    //   messages: [
-    //     {
-    //       role: "system",
-    //       content:
-    //         "Your task is to return a one sentence summary of the note the user provides.",
-    //     },
-    //     {
-    //       role: "user",
-    //       content: note,
-    //     },
-    //   ],
-    // });
-
-    const newNote = {
-      id: uuid(),
-      profileId: user?.id ?? null,
-      title: title,
-      content: content,
-      contentEmbedding: embedding.data[0].embedding,
-
-      createdAt: new Date(),
-      updatedAt: null,
-      deletedAt: null,
-    } satisfies Note;
-
-    await db.insert(notes).values(newNote);
+    const qEmbedding = await getTextEmbedding(question);
+    const top3Notes = await db.select().from(notes).where(
+      user?.id ? eq(notes.profileId, user.id) : isNull(notes.profileId),
+    ).orderBy(
+      l2Distance(notes.contentEmbedding, qEmbedding),
+    ).limit(3);
+    const questionAnswer = await answerQuestion(
+      question,
+      top3Notes.map((note) => note.content),
+    );
 
     return new Response(
-      JSON.stringify({ newNote }),
+      JSON.stringify({ questionAnswer, top3Notes }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
