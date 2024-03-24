@@ -1,3 +1,4 @@
 
 supabase/functions/_shared/calendar.json
 frontend/.env*
+frontend/node_modules/
