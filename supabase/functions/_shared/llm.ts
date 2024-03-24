@@ -1,5 +1,5 @@
 import MistralClient from "npm:@mistralai/mistralai";
-import calendarJSON from "./calendar.json" with { type: "json" };
+// import calendarJSON from "./calendar.json" with { type: "json" };
 
 const client = new MistralClient("TWfVrlX659GSTS9hcsgUcPZ8uNzfoQsg");
 
