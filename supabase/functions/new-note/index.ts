@@ -3,15 +3,17 @@ import { z } from "https://deno.land/x/zod/mod.ts";
 import { ZodError } from "https://deno.land/x/zod@v3.22.4/ZodError.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import MistralClient from "npm:@mistralai/mistralai";
-import { notes } from "../_shared/schema.ts";
+import { notes, noteTags, tags } from "../_shared/schema.ts";
 import { drizzle } from "npm:drizzle-orm/postgres-js";
-import { InferSelectModel } from "npm:drizzle-orm";
+import { and, eq, InferSelectModel, isNull } from "npm:drizzle-orm";
 import postgres from "npm:postgres";
 import { uuid } from "https://esm.sh/v135/@supabase/gotrue-js@2.62.2/dist/module/lib/helpers.js";
 import { corsHeaders } from "../_shared/cors.ts";
+import { getCategoryLabel } from "../_shared/llm.ts";
+import { ConsoleLogWriter } from "npm:drizzle-orm/logger";
 
-const databaseUrl = Deno.env.get("SUPABASE_DB_URL")!;
-const pool = postgres(databaseUrl);
+const databaseUrl = Deno.env.get("C_SUPABASE_DB_URL")!;
+const pool = postgres(databaseUrl, { prepare: false });
 const db = drizzle(pool);
 
 type Note = InferSelectModel<typeof notes>;
@@ -19,6 +21,7 @@ type Note = InferSelectModel<typeof notes>;
 const body = z.object({
   title: z.string(),
   content: z.string(),
+  date: z.string().transform((v) => new Date(v)).optional(),
 });
 
 Deno.serve(async (req) => {
@@ -34,7 +37,7 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const { title, content } = body.parse(await req.json());
+    const { title, content, date } = body.parse(await req.json());
 
     const { data } = await supabaseClient.auth.getUser();
     const user = data.user;
@@ -44,20 +47,12 @@ Deno.serve(async (req) => {
       model: "mistral-embed",
       input: `${title}\n${content}`,
     });
-    // const chatResponse = await client.chat({
-    //   model: "mistral-small",
-    //   messages: [
-    //     {
-    //       role: "system",
-    //       content:
-    //         "Your task is to return a one sentence summary of the note the user provides.",
-    //     },
-    //     {
-    //       role: "user",
-    //       content: note,
-    //     },
-    //   ],
-    // });
+
+    const savedCategories = (await db.select().from(tags).where(
+      user?.id ? eq(tags.profileId, user.id) : isNull(tags.profileId),
+    )).map((tag) => tag.name);
+
+    console.log("Saved categories: ", savedCategories);
 
     const newNote = {
       id: uuid(),
@@ -66,12 +61,58 @@ Deno.serve(async (req) => {
       content: content,
       contentEmbedding: embedding.data[0].embedding,
 
-      createdAt: new Date(),
+      createdAt: date ?? new Date(),
       updatedAt: null,
       deletedAt: null,
     } satisfies Note;
 
+    const category = await getCategoryLabel(
+      newNote.content,
+      savedCategories,
+    );
+
+    let tagId;
+
+    if (!savedCategories.includes(category)) {
+      savedCategories.push(category);
+
+      console.log("New category added: ", category);
+
+      // Save tag
+      const newTag = await db.insert(tags).values({
+        id: uuid(),
+        profileId: user?.id ?? null,
+        name: category,
+        hexColor: "#" +
+          (Math.random() * 0xFFFFFF << 0).toString(16).padStart(6, "0"),
+        createdAt: new Date(),
+        updatedAt: null,
+        deletedAt: null,
+      });
+
+      console.log("Saved new tag: ", newTag);
+
+      tagId = newTag.id;
+    } else {
+      const tag = await db.select().from(tags).where(
+        and(
+          user?.id ? eq(tags.profileId, user.id) : isNull(tags.profileId),
+          eq(tags.name, category),
+        ),
+      );
+
+      console.log("Added to category: ", tag);
+
+      tagId = tag[0].id;
+    }
+
     await db.insert(notes).values(newNote);
+
+    // create noteTag
+    await db.insert(noteTags).values({
+      noteId: newNote.id,
+      tagId: tagId,
+    });
 
     return new Response(
       JSON.stringify({ newNote }),

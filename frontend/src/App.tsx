@@ -19,15 +19,20 @@ import {
 // Import the Metatopic List component
 import MetatopicList from "@/components/pages/MetatopicList.tsx";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "./lib/utils";
 import { useEffect, useMemo, useState } from "react";
 
-function SearchInput() {
+function SearchInput(props: {
+  question: string;
+  setQuestion: (question: string) => void;
+  triggerQuery: () => void;
+}) {
   const navigate = useNavigate();
 
   const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") {
+      props.triggerQuery();
       navigate(`/search/${event.currentTarget.value}`);
     }
   };
@@ -37,12 +42,15 @@ function SearchInput() {
       className="mb-4"
       placeholder="Search for a database"
       onKeyDown={handleSearch}
+      value={props.question}
+      onChange={(event) => props.setQuestion(event.currentTarget.value)}
     />
   );
 }
 
 function App() {
   const [content, setContent] = useState("{}");
+  const [question, setQuestion] = useState("");
   const { title, textContent } = useMemo(() => {
     const decoded = JSON.parse(content);
     if (!decoded.root) return { title: undefined, textContent: undefined };
@@ -78,6 +86,26 @@ function App() {
     },
   });
 
+  const ragQuery = useMutation({
+    mutationKey: ["rag"],
+    mutationFn: async (question: string) => {
+      const res = await supabase.functions.invoke("query", {
+        body: { question },
+      });
+
+      return res.data as { questionAnswer: string; top3Notes: any[] };
+    },
+  });
+
+  function triggerQuery() {
+    if (!question) return;
+    ragQuery.mutate(question);
+  }
+
+  // useEffect(() => {
+
+  // }, [question, ragQuery]);
+
   return (
     <>
       <div className="app-wrapper">
@@ -105,9 +133,25 @@ function App() {
                 <div className="p-4 bg-white rounded-t-[10px] flex-1">
                   <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 mb-8" />
                   <Router>
-                    <SearchInput />
+                    <SearchInput
+                      question={question}
+                      setQuestion={setQuestion}
+                      triggerQuery={triggerQuery}
+                    />
                     <Routes>
                       <Route path="/" element={<MetatopicList />} />
+                      <Route
+                        path="/search/:query"
+                        element={
+                          <>
+                            {ragQuery.isPending && <div>Loading...</div>}
+                            {ragQuery.isSuccess && (
+                              <div>{ragQuery.data.questionAnswer}</div>
+                            )}
+                            <div></div>
+                          </>
+                        }
+                      />
                     </Routes>
                   </Router>
                 </div>

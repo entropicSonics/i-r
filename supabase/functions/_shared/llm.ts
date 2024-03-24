@@ -1,7 +1,7 @@
 import MistralClient from "npm:@mistralai/mistralai";
-import { notes } from "./schema.ts";
+// import calendarJSON from "./calendar.json" with { type: "json" };
 
-const client = new MistralClient(Deno.env.get("MISTRAL_API_KEY") || "");
+const client = new MistralClient("TWfVrlX659GSTS9hcsgUcPZ8uNzfoQsg");
 
 // Function to generate text embeddings
 export async function getTextEmbedding(text: string): Promise<number[]> {
@@ -53,7 +53,7 @@ Query: ${question}
 Answer:`;
 
   const chatResponse = await client.chat({
-    model: "mistral-medium-latest",
+    model: "mistral-small-latest",
     messages: [
       { role: "user", content: prompt },
     ],
@@ -65,4 +65,90 @@ Answer:`;
   }
 
   return answer.trim();
+}
+
+export async function getCategoryLabel(
+  text: string,
+  existingLabels: string[],
+): Promise<string> {
+  const prompt = `Given the following categories: ${
+    existingLabels.join(", ")
+  }, what category does the following text belong to? You can invent new categories but they should be specific to the topic but generic to the text. Use the reply key 'category'`;
+
+  // console.log("Prompt: ", prompt);
+
+  const response = await client.chat({
+    messages: [
+      {
+        role: "system",
+        content:
+          // make the llm return the category biased toward exsiting categories but able to create new ones
+          prompt,
+      },
+      { role: "user", content: text },
+    ],
+    model: "mistral-large-latest",
+    responseFormat: { "type": "json_object" },
+  });
+
+  const reply = response.choices[0].message.content;
+
+  console.log("Reply: ", reply);
+
+  const category = JSON.parse(reply).category;
+
+  console.log("Category: ", category);
+
+  return category.split().map((word: string) =>
+    word[0].toUpperCase() + word.slice(1)
+  ).join(" ");
+}
+
+if (import.meta.main) {
+  const savedCategories = [];
+  const notes = [];
+
+  console.log("Events: ", calendarJSON);
+
+  const events = calendarJSON.events;
+
+  for (const event of events) {
+    // get stdin
+    const newNote = event[2];
+
+    if (!newNote) {
+      break;
+    }
+
+    const category = await getCategoryLabel(
+      newNote,
+      savedCategories,
+    );
+
+    if (!savedCategories.includes(category)) {
+      savedCategories.push(category);
+
+      console.log("New category added: ", category);
+    } else {
+      console.log("Added to category: ", category);
+    }
+
+    notes.push({
+      note: newNote,
+      category,
+      date: new Date(),
+    });
+
+    // Pretty print notes by category
+    console.log("==========\nNotes:\n==========");
+
+    savedCategories.forEach((category) => {
+      console.log(`Category: ${category}`);
+      notes
+        .filter((note) => note.category === category)
+        .forEach((note) => {
+          console.log(`- ${note.note}`);
+        });
+    });
+  }
 }
