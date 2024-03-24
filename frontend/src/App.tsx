@@ -167,7 +167,9 @@ function App() {
                             {ragQuery.isPending && <div>Loading...</div>}
                             {ragQuery.isSuccess && (
                               <>
-                                <div>{ragQuery.data.questionAnswer}</div>
+                                <div className="text-s mb-4- text-slate-500 pb-4">
+                                  {ragQuery.data.questionAnswer}
+                                </div>
                                 <div>
                                   {ragQuery.data.top3Notes.map((note) => (
                                     <NoteCollapsed
