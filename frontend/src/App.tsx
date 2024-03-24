@@ -68,6 +68,8 @@ function App() {
       title: string;
       content: string;
     }) => {
+      if (title === undefined || content === undefined)
+        throw new Error("Invalid note");
       const res = await supabase.functions.invoke("new-note", {
         body: { title, content },
       });
@@ -79,11 +81,23 @@ function App() {
   return (
     <>
       <div className="app-wrapper">
-        <div className="editor-controls flex justify-end">
+        <div className="editor-controls flex justify-end gap-2">
+          <Button
+            onClick={async () => {
+              if (saveNoteMutation.isPending || !title || !textContent) return;
+              await saveNoteMutation.mutateAsync({
+                title: title,
+                content: textContent,
+              });
+            }}
+            className="rounded-full border-2 bg-gray-100 text-slate-900 hover:text-slate-200"
+          >
+            Categorize
+          </Button>
           <Drawer.Root>
             <Drawer.Trigger>
               <Button className="rounded-full border-2 bg-gray-100 text-slate-900 hover:text-slate-200">
-                Categorize
+                View Notes
               </Button>
             </Drawer.Trigger>
             <Drawer.Portal>
@@ -105,17 +119,6 @@ function App() {
         <div className="editor-wrapper">
           <Editor setContent={setContent} />
         </div>
-        <Button
-          onClick={async () => {
-            if (saveNoteMutation.isPending || !title || !textContent) return;
-            await saveNoteMutation.mutateAsync({
-              title: title,
-              content: textContent,
-            });
-          }}
-        >
-          Submit
-        </Button>
       </div>
     </>
   );
