@@ -1,0 +1,49 @@
+#root {
+  width: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.editor-wrapper {
+  position:relative;
+  margin-top: 24px;
+}
+
+.editor {
+  height: 500px;
+  width: 100%;
+  text-align: left;
+}
+
+/* Remove the border when the editor is selected */
+.editor:focus {
+  outline: none;
+}
+
+.editor::first-line {
+  font-weight: bold;
+  font-size: 22px;
+  display:block;
+  line-height: 3;
+ }
+
+.editor-controls {
+  padding-bottom: 16px;
+  border-bottom: 2px solid #F3F3F399;
+}
+
+.editor-placeholder {
+  position:absolute;
+  top: 0;
+  font-weight: bold;
+  font-size: 22px;
+  line-height: 3;
+}
+
+/* Create a media query to give a different style to anything over 560 px */
+@media (min-width: 560px) {
+  .app-wrapper {
+    width: 560px;
+    margin: 0 auto;
+  }
+}
