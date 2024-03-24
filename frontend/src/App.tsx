@@ -1,8 +1,13 @@
 // import { useState } from 'react'
 import './App.css'
 // import the Editor component
-import Editor from './Editor.tsx'
+import Editor from '@/components/ui/Editor.tsx'
 import { Button } from "@/components/ui/button"
+// Import the Input component
+import { Input } from "@/components/ui/input"
+// Import the metatopic component
+import Metatopic from '@/components/ui/Metatopic.tsx'
+
 import { Drawer } from 'vaul';
 
 function App() {
@@ -22,10 +27,18 @@ function App() {
                 <div className="p-4 bg-white rounded-t-[10px] flex-1">
                   <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-gray-300 mb-8" />
                   <div className="max-w-md mx-auto">
-                    <Drawer.Title className="font-medium mb-4">Database</Drawer.Title>
-                    <p className="text-gray-600 mb-2">
-                      Boom boom info
-                    </p>
+                    {/* <Drawer.Title className="font-medium mb-4">Database</Drawer.Title> */}
+                    {/* Drawer Contents */}
+                    <Input
+                      className="mb-4"
+                      placeholder="Search for a database" />
+                    
+                    <div className = "metatopic-list">
+                      <Metatopic title="Private Equity Research" activity="Last Activity on Dec 2, 2023 at 11:34pm" />
+                      <Metatopic title="AI Art" activity="Last Activity Today at 1:34pm" />
+                      <Metatopic title="Design Investment Thesis" activity="Last Activity on Oct 12, 2023" />
+                      <Metatopic title="Vedic Philosophy" activity="Last Activity at 2:04pm" />
+                    </div>
                   </div>
                 </div>
               </Drawer.Content>
