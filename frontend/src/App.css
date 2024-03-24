@@ -6,13 +6,14 @@
 
 .editor-wrapper {
   position:relative;
-  margin-top: 24px;
 }
 
 .editor {
   height: 500px;
   width: 100%;
   text-align: left;
+  padding-top: 24px;
+
 }
 
 /* Remove the border when the editor is selected */
@@ -38,6 +39,7 @@
   font-weight: bold;
   font-size: 22px;
   line-height: 3;
+  padding-top: 24px;
 }
 
 /* Create a media query to give a different style to anything over 560 px */
