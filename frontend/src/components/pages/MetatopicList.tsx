@@ -15,13 +15,18 @@ const MetatopicList: React.FC<Props> = ({ metatopics }) => {
       {/* Drawer Contents */}
 
       <div className="metatopic-list">
-        <NoteCollapsed
+        {/* <NoteCollapsed
           title="Database"
           activity="Last Activity on Dec 2, 2023 at 11:34pm"
-        />
+        /> */}
 
         {metatopics.map((metatopic) => (
-          <Metatopic title={metatopic.name} activity={metatopic.createdAt} />
+          <Metatopic
+            title={metatopic.name}
+            activity={metatopic.createdAt}
+            key={metatopics.id}
+            bgcolor={metatopic.hexColor}
+          />
         ))}
 
         {/* 
