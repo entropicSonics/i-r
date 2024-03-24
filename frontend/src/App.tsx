@@ -175,6 +175,7 @@ function App() {
                                     <NoteCollapsed
                                       title={note.title}
                                       activity={note.createdAt}
+                                      content={note.content}
                                     />
                                   ))}
                                 </div>
