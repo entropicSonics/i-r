@@ -1,7 +1,7 @@
 import MistralClient from "npm:@mistralai/mistralai";
-import { notes } from "./schema.ts";
+import type { ResponseFormats } from "npm:@mistralai/mistralai";
 
-const client = new MistralClient(Deno.env.get("MISTRAL_API_KEY") || "");
+const client = new MistralClient("TWfVrlX659GSTS9hcsgUcPZ8uNzfoQsg");
 
 // Function to generate text embeddings
 export async function getTextEmbedding(text: string): Promise<number[]> {
@@ -53,7 +53,7 @@ Query: ${question}
 Answer:`;
 
   const chatResponse = await client.chat({
-    model: "mistral-medium-latest",
+    model: "mistral-small-latest",
     messages: [
       { role: "user", content: prompt },
     ],
@@ -65,4 +65,45 @@ Answer:`;
   }
 
   return answer.trim();
+}
+
+export async function getCategoryLabel(
+  text: string,
+  existingLabels: string[],
+): Promise<string> {
+  const response = await client.chat({
+    messages: [
+      {
+        role: "system",
+        content:
+          "Please return just the `category` key of the following categories: " +
+          existingLabels.join(", ") +
+          ". If the text does not match any of the categories, return a new, hyper-specific 2-3 word category name",
+      },
+      { role: "user", content: text },
+    ],
+    model: "mistral-large-latest",
+    responseFormat: { "type": "json_object" },
+  });
+
+  const category = JSON.parse(response.choices[0].message.content).category;
+
+  return category.split().map((word: string) =>
+    word[0].toUpperCase() + word.slice(1)
+  ).join(" ");
+}
+
+if (import.meta.main) {
+  const savedCategories = ["school", "work", "personal"];
+
+  const category = await getCategoryLabel(
+    "Brahman: This is the ultimate reality or absolute truth. It's impersonal, transcendent, and immanent. It's the cause and essence of the universe, being itself uncaused.",
+    savedCategories,
+  );
+
+  if (!savedCategories.includes(category)) {
+    savedCategories.push(category);
+  }
+
+  console.log(category);
 }
