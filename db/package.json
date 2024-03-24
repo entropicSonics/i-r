@@ -1,0 +1,25 @@
+{
+  "name": "db",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "drizzle-kit": "^0.20.14",
+    "drizzle-orm": "^0.30.4",
+    "pg": "^8.11.3",
+    "pgvector": "^0.1.8",
+    "postgres": "^3.4.4"
+  },
+  "scripts": {
+    "migrate:run:prod": "bun --env-file=.env.production src/index.ts",
+    "migrate:run:dev": "bun --env-file=.env.development src/index.ts",
+    "migrate:create": "drizzle-kit generate:pg",
+    "migrate:drop": "drizzle-kit drop",
+    "migrate:check": "drizzle-kit check:pg"
+  }
+}
