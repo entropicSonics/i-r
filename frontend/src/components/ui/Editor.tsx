@@ -6,23 +6,23 @@ import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
-interface Props {}
+interface Props {
+  setContent: (content: string) => void;
+}
 
 const theme = {};
 
 function onError(error: Error): void {
   console.error(error);
 }
-
-const Editor: React.FC<Props> = () => {
-  // Component logic goes here
-  const initialConfig = {
-    namespace: "editor",
-    theme,
-    onError,
-  };
-
+const initialConfig = {
+  namespace: "editor",
+  theme,
+  onError,
+};
+const Editor: React.FC<Props> = (props) => {
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <PlainTextPlugin
@@ -38,6 +38,11 @@ const Editor: React.FC<Props> = () => {
         ErrorBoundary={LexicalErrorBoundary}
       />
       <HistoryPlugin />
+      <OnChangePlugin
+        onChange={(content) => {
+          props.setContent(JSON.stringify(content.toJSON()));
+        }}
+      />
     </LexicalComposer>
   );
 };

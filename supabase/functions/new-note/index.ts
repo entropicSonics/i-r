@@ -8,6 +8,7 @@ import { drizzle } from "npm:drizzle-orm/postgres-js";
 import { InferSelectModel } from "npm:drizzle-orm";
 import postgres from "npm:postgres";
 import { uuid } from "https://esm.sh/v135/@supabase/gotrue-js@2.62.2/dist/module/lib/helpers.js";
+import { corsHeaders } from "../_shared/cors.ts";
 
 const databaseUrl = Deno.env.get("SUPABASE_DB_URL")!;
 const pool = postgres(databaseUrl);
@@ -21,6 +22,10 @@ const body = z.object({
 });
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
     const authHeader = req.headers.get("Authorization")!;
     const supabaseClient = createClient(
@@ -70,7 +75,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ newNote }),
-      { headers: { "Content-Type": "application/json" } },
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {
     if (error instanceof ZodError) {
