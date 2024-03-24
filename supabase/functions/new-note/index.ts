@@ -78,9 +78,11 @@ Deno.serve(async (req) => {
 
       console.log("New category added: ", category);
 
+      tagId = uuid();
+
       // Save tag
       const newTag = await db.insert(tags).values({
-        id: uuid(),
+        id: tagId,
         profileId: user?.id ?? null,
         name: category,
         hexColor: "#" +
@@ -90,9 +92,7 @@ Deno.serve(async (req) => {
         deletedAt: null,
       });
 
-      console.log("Saved new tag: ", newTag);
-
-      tagId = newTag.id;
+      console.log("Saved new tag: ", category);
     } else {
       const tag = await db.select().from(tags).where(
         and(
